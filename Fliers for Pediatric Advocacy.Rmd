@@ -1,0 +1,69 @@
+---
+title: "Bay Area Resource Fliers" 
+author: "Chris LeBoa" 
+date: "`r Sys.Date()`"
+output: 
+  github_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+# Libraries
+library(tidyverse)
+library(googlesheets4)
+library(gridExtra)
+
+# Parameters
+sheet_link <- "https://docs.google.com/spreadsheets/d/11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM/edit?usp=sharing"
+#===============================================================================
+
+# Code
+```
+
+## Read in sheet
+
+```{r}
+resources <- 
+  read_sheet(sheet_link, sheet = 2, col_types = "c") %>% 
+  rename_all(str_to_lower) %>% 
+  drop_na(organization) %>% 
+  rename_all(~str_remove_all(.,"\\,|\\/|\\?|\\(|\\)")) %>% 
+  rename_all(~str_replace_all(.,"\\ ","_")) %>% 
+  select(type:links_spanish)
+#set to volunteer facing document right now
+
+
+```
+
+### Parse by County
+
+```{r}
+resources %>% 
+  filter(
+    #county == "Santa Clara", 
+    type == "Core Service Provider"
+    ) %>% 
+  pdf("test_resources.pdf", height=11, width=10)
+
+#create sheet
+ss5 <- sheets_write(
+  "sheets-create-demo-5",
+  locale = "fr_FR",
+  timeZone = "Europe/Paris"
+) #This is not working 
+
+
+googledrive::drive_download(
+  file = googledrive::as_id(YOUR_SHEET_ID), 
+  path = "/Users/ChrisLeBoa/Desktop/Bay_Area_Resources/Fliers_test.pdf", 
+  type = "pdf"
+)
+```
+
+
+## Section 2
+
