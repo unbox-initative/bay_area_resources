@@ -1,0 +1,184 @@
+---
+title: "Petition_Signers"
+author: "Chris LeBoa"
+date: "4/8/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+api <- "AIzaSyAKH88nqEthMBCqbuefAoCS6JRZvZVvWLI" # Text file with the API key
+#register_google(key = api)
+getOption("ggmap")
+
+
+#install.packages("tidyverse")
+#install.packages('tidygeocoder')
+#install.packages("tmaptools")
+#install.packages("USAboundaries")
+
+library(tidyverse)
+library(ggmap)
+library(leaflet)
+library(sf)
+library(USAboundaries)
+library(leaflet.extras)
+
+
+file_csv <- here::here("data/petition_signatures.csv")
+file_lat_long <- here::here("data/petition_lat_long.csv")
+file_comments <- here::here("data/petition_comments.csv")
+
+file_output <- here::here("data/petition_state.csv")
+file_output_comments <- here::here("data/petition_state_comments.csv")
+
+```
+
+## People who want SNAP Expanded to Online/ Mobile Orders
+
+This is map of all the signers of the Change. Org petition on expanding snap
+benefits to include online orders.  
+
+```{r, include=FALSE}
+
+
+signature_csv <- read_csv(file_csv)
+comments_csv <- read_csv(file_comments)
+
+```
+This code adds lat and long to each address. It takes forever to run and costs $ 
+so only uncomment if you really want it rerun
+```{r, include=FALSE}
+
+# sig_lat_long <-#read_csv(file_lat_long)
+#    signature_csv %>%
+#    rename_all(str_to_lower) %>%
+#    mutate_all(~replace_na(.,"")) %>%
+#    mutate(postal_code = if_else(str_detect(`postal code`, "^[0-9]*$"), `postal code`, "")) %>%
+#    mutate(address = str_glue("{city}, {state}, {country} {postal_code}", .sep = ", ")) %>%
+#    mutate_geocode(address)
+# 
+# sig_lat_long %>% 
+#   write_csv(file_lat_long)
+
+
+```
+
+#add comments to the signatures
+```{r, echo=FALSE}
+lat_long_comments <- read_csv(file_lat_long) %>% 
+  mutate(
+    name = iconv(name, "latin1", "UTF-8"),
+    comment = iconv(comment, "latin1", "UTF-8"))
+  
+#Run the following code to attach comments first time running code
+
+#   sig_lat_long %>%
+#   mutate(postal_code = as.character(postal_code)) %>% 
+#   left_join(
+#     comments_csv %>% rename_all(str_to_lower),
+#     by = c("name", "city", "state", "country", "postal_code" = "postal code")
+#   ) %>%
+#   write_csv(file_lat_long)
+# 
+# view(lat_long_comments)
+
+```
+
+
+```{r, echo=FALSE, fig.height=8, fig.width=10, warning=FALSE}
+# first 20 quakes
+df.20 <- lat_long_comments
+
+getColor <- function(quakes) {
+  sapply(lat_long_comments$comment, function(comment) {
+  if(!is.na(comment)) {
+    "green"
+  }  else {
+    "red"
+  } })
+}
+
+icons <- awesomeIcons(
+  icon = 'ios-close',
+  iconColor = 'black',
+  library = 'ion',
+  markerColor = getColor(df.20)
+)
+
+leaflet(df.20) %>% addTiles() %>%
+  addAwesomeMarkers(
+    ~lon,
+    ~lat,
+    icon=icons,
+    label = ~str_c(if_else(is.na(comment), "", comment), name),
+    labelOptions = labelOptions(noHide = F),
+    clusterOptions = markerClusterOptions()
+    )
+
+
+# 
+# leaflet() %>% 
+#   addProviderTiles(
+#     providers$CartoDB.Positron,
+#     options = providerTileOptions(minZoom = 1, maxZoom = 16)
+#     ) %>% 
+#   addAwesomeMarkers(
+#     data = lat_long_comments,
+#     color = "red",
+#     label = ~str_c(if_else(is.na(comment), "", comment), name),
+#     clusterOptions = markerClusterOptions()
+#    ) 
+```
+
+
+
+
+
+```{r pressure, include=FALSE}
+## The numbers of signees by state 
+#Signatures by state 
+signature_csv %>% 
+  rename_all(str_to_lower) %>% 
+  group_by(state) %>% 
+  count() %>% 
+  arrange(desc(n)) %>% 
+  write_csv(file_output)
+
+#comments by state 
+comments_csv %>% 
+  rename_all(str_to_lower) %>% 
+  group_by(state) %>% 
+  count() %>% 
+  arrange(desc(n))
+
+
+#Comments by State 
+comments_csv %>% 
+  rename_all(str_to_lower) %>% 
+  select(comment, name, state) %>% 
+  arrange(state) %>% 
+  write_csv(file_output_comments)
+```
+
+
+
+```{r, include=FALSE}
+## The number of signees by congressional district 
+counties <- ussf::boundaries(geography = "county", resolution = "20m", projection = "longlat") %>% st_transform(crs = 4326 )
+
+counties %>% 
+  st_crs()
+
+# lat_long_comments %>% 
+#   drop_na(lat, lon) %>% 
+#   filter(lon < -25) %>% 
+#   st_as_sf(coords = c("lon", "lat")) %>% 
+#   ggplot() + 
+#   geom_sf() + 
+#   geom_sf(data = counties)
+
+
+```
+
