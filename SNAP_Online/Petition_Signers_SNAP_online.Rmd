@@ -2,7 +2,8 @@
 title: "Petition_Signers"
 author: "Chris LeBoa"
 date: "4/8/2020"
-output: html_document
+output: github_document
+always_allow_html: true
 ---
 
 ```{r setup, include=FALSE}
@@ -11,6 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 api <- "AIzaSyAKH88nqEthMBCqbuefAoCS6JRZvZVvWLI" # Text file with the API key
 #register_google(key = api)
 getOption("ggmap")
+
+webshot::install_phantomjs()
 
 
 #install.packages("tidyverse")
@@ -168,8 +171,7 @@ comments_csv %>%
 ## The number of signees by congressional district 
 counties <- ussf::boundaries(geography = "county", resolution = "20m", projection = "longlat") %>% st_transform(crs = 4326 )
 
-counties %>% 
-  st_crs()
+
 
 # lat_long_comments %>% 
 #   drop_na(lat, lon) %>% 
