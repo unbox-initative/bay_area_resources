@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # Libraries
 library(tidyverse)
 library(googlesheets4)
-library(gridExtra)
+library(tidyr)
 
 # Parameters
 sheet_link <- "https://docs.google.com/spreadsheets/d/11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM/edit?usp=sharing"
@@ -27,13 +27,24 @@ sheet_link <- "https://docs.google.com/spreadsheets/d/11tdkyX0kR8nRwMUktohdp2Wx1
 ## Read in sheet
 
 ```{r}
+# col_types = cols(.default = "c")
+
 resources <- 
   read_sheet(sheet_link, sheet = 2, col_types = "c") %>% 
   rename_all(str_to_lower) %>% 
   drop_na(organization) %>% 
-  rename_all(~str_remove_all(.,"\\,|\\/|\\?|\\(|\\)")) %>% 
+  rename_all(~str_remove_all(.,"\\,|\\/")) %>% 
   rename_all(~str_replace_all(.,"\\ ","_")) %>% 
-  select(type:links_spanish)
+  mutate(
+    location = str_replace_all(location, "\n", " "),
+    days_hours = str_replace_all(days_hours, "\n", " ")
+  ) %>% 
+  select(-1, -c("open_time", "close_time", "date_verified"))
+
+#set to volunteer facing document right now
+
+resources
+
 #set to volunteer facing document right now
 
 
@@ -42,28 +53,29 @@ resources <-
 ### Parse by County
 
 ```{r}
-resources %>% 
-  filter(
-    #county == "Santa Clara", 
-    type == "Core Service Provider"
-    ) %>% 
-  pdf("test_resources.pdf", height=11, width=10)
 
-#create sheet
-ss5 <- sheets_write(
-  "sheets-create-demo-5",
-  locale = "fr_FR",
-  timeZone = "Europe/Paris"
-) #This is not working 
+santa_clara <- 
+  resources %>% 
+  filter(county == "Santa Clara")
 
-
-googledrive::drive_download(
-  file = googledrive::as_id(YOUR_SHEET_ID), 
-  path = "/Users/ChrisLeBoa/Desktop/Bay_Area_Resources/Fliers_test.pdf", 
-  type = "pdf"
-)
 ```
 
 
-## Section 2
+## Write to Google Sheet
+
+```{r}
+
+# This commented line finds the ID for our volunteer spreadsheet
+# as_sheets_id("https://docs.google.com/spreadsheets/d/11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM/edit#gid=0")
+
+volunteer_sheet_id <- "11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM"
+
+# This commented line gives more info on the spreadsheet
+# sheets_sheet_properties(volunteer_sheet_id)
+
+# Write sheet to a new tab (must first create in the spreadsheet)
+# This is for the filtered Santa Clara sheet
+write_sheet(santa_clara, volunteer_sheet_id, sheet = 5)
+
+```
 
