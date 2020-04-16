@@ -13,12 +13,22 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r message=FALSE, warning=FALSE}
 # Libraries
+
+devtools::install_github("tidyverse/googlesheets4") 
+#needs the devtools version 
+#not the cran version to run 
+
 library(tidyverse)
 library(googlesheets4)
 library(tidyr)
 
 # Parameters
 sheet_link <- "https://docs.google.com/spreadsheets/d/11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM/edit?usp=sharing"
+
+# This commented line finds the ID for our volunteer spreadsheet
+# as_sheets_id("https://docs.google.com/spreadsheets/d/11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM/edit#gid=0")
+
+volunteer_sheet_id <- "11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM"
 #===============================================================================
 
 # Code
@@ -54,10 +64,38 @@ resources
 
 ```{r}
 
-santa_clara <- 
-  resources %>% 
-  filter(county == "Santa Clara")
 
+#separate county column by comma 
+resources_longer <- 
+  resources %>% 
+  separate_rows(county, sep = ", ") %>% 
+  group_by(county)
+
+
+# Way #1 of creating separate named datasets by county 
+
+# get group keys
+group_name <- 
+  resources_longer %>%
+  group_keys() %>% 
+  pull()
+
+# assign name to each split table
+group_split(resources_longer) %>%
+    setNames(group_name ) %>% 
+    list2env(.GlobalEnv)
+
+# Way #2 of doing this 
+
+resources_longer %>%
+    nest(-county) %>%
+    pmap(~write_csv(x = .y, path = paste0(.x, ".csv")))#ss = volunteer_sheet_id, sheet = (.x))) %>%
+#   pmap(~write_sheet(x = .y, ss = volunteer_sheet_id, sheet = (.x) ) )
+
+    
+#says cannot find function write sheet but if it could this would be really cool 
+#this function does work with a write csv so it should also work with the write sheet 
+    
 ```
 
 
@@ -65,17 +103,8 @@ santa_clara <-
 
 ```{r}
 
-# This commented line finds the ID for our volunteer spreadsheet
-# as_sheets_id("https://docs.google.com/spreadsheets/d/11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM/edit#gid=0")
 
-volunteer_sheet_id <- "11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM"
-
-# This commented line gives more info on the spreadsheet
-# sheets_sheet_properties(volunteer_sheet_id)
-
-# Write sheet to a new tab (must first create in the spreadsheet)
-# This is for the filtered Santa Clara sheet
-write_sheet(santa_clara, volunteer_sheet_id, sheet = 5)
+  write_sheet(`Santa Clara`, ss = volunteer_sheet_id, sheet = 5)
 
 ```
 
