@@ -1,0 +1,87 @@
+---
+title: "Bay Area Resource Fliers" 
+author: "Chris LeBoa & Joyce Tagal" 
+date: "`r Sys.Date()`"
+output: 
+  github_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+# Libraries
+
+devtools::install_github("tidyverse/googlesheets4") 
+#needs the devtools version 
+#not the cran version to run 
+
+library(tidyverse)
+library(googlesheets4)
+library(tidyr)
+
+# Parameters
+sheet_link <- "https://docs.google.com/spreadsheets/d/11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM/edit?usp=sharing"
+
+# This commented line finds the ID for our volunteer spreadsheet
+# as_sheets_id("https://docs.google.com/spreadsheets/d/11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM/edit#gid=0")
+
+volunteer_sheet_id <- "11tdkyX0kR8nRwMUktohdp2Wx1fGiMiHrlUP4i_8ctPM"
+#===============================================================================
+
+# Code
+```
+
+## Read in sheet
+
+```{r}
+# col_types = cols(.default = "c")
+
+resources <- 
+  read_sheet(sheet_link, sheet = 2, col_types = "c") %>% 
+  rename_all(str_to_lower) %>% 
+  drop_na(organization) %>% 
+  rename_all(~str_remove_all(.,"\\,|\\/")) %>% 
+  rename_all(~str_replace_all(.,"\\ ","_")) %>% 
+  mutate(
+    location = str_replace_all(location, "\n", " "),
+    days_hours = str_replace_all(days_hours, "\n", " ")
+  ) %>% 
+  select(-1, -c("open_time", "close_time", "date_verified"))
+
+#set to volunteer facing document right now
+
+resources
+
+#set to volunteer facing document right now
+
+
+```
+
+### Parse by County
+
+```{r}
+
+#separate county column by comma 
+resources_longer <- 
+  resources %>% 
+  separate_rows(county, sep = ", ") %>% 
+  group_by(county)
+
+    
+```
+
+
+## Write to Google Sheet
+
+```{r}
+
+resources_longer %>%
+  nest(-county) %>%
+  drop_na(county) %>% 
+  pmap(~write_sheet(.y, ss = volunteer_sheet_id, sheet = (.x)))
+
+```
+
