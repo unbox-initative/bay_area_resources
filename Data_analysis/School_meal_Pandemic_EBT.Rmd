@@ -1,0 +1,141 @@
+---
+title: "School_meals_report"
+author: "Chris LeBoa"
+date: "6/12/2020"
+output: html_document
+---
+
+#Load Packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(googlesheets4)
+```
+
+## Read in Data
+
+```{r cars}
+school_meals <- read_sheet("1fea1BSSAhbSB0HLsatDaD8wxmwsF7ezQjNvjRK-QJQI", col_types = "ccccccccccccccccccccccccccccccccccccccccc")
+
+```
+#Cleaning data 
+```{r}
+school_meals_months <- 
+  school_meals %>% 
+  filter(status == "Open") %>% 
+  mutate(
+    end_date = 
+    case_when(
+      str_detect(end_date, "June") == TRUE ~ "6/30",
+      str_detect(end_date, "end of school year") == TRUE ~ NA_character_,
+      str_detect(end_date, "06") == TRUE ~ "6/12", 
+      TRUE ~ end_date
+      ),
+    end_month = 
+      case_when(
+      str_detect(end_date, "05/|5/") == TRUE ~ "not specified on school website",
+      str_detect(end_date, "06/|6/") == TRUE ~ "6", 
+      str_detect(end_date, "07/|7/") == TRUE ~ "7",
+      str_detect(end_date, "08/|8/") == TRUE ~ "8", 
+      is.na(end_date) == TRUE ~ "not specified on school website", 
+      TRUE ~ end_date
+      ),
+    end_month = str_to_lower(end_month)
+  ) 
+
+
+```
+
+## Basic counts of schools still open
+
+```{r}
+
+
+school_meals %>% 
+  filter(!is.na(status), status != "status") %>% 
+  count(status)
+
+
+
+school_meals %>% 
+  count(provider_name)
+
+school_meals %>% 
+  filter(!is.na(status)) %>% 
+  distinct(provider_name) #137 school districts 
+
+
+
+
+
+
+```
+
+#schools PEBT information details 
+```{r}
+
+school_meals %>% 
+  filter(!is.na(pebt_info_yn)) %>% 
+  count(pebt_info_yn)
+
+school_meals %>% 
+  filter(pebt_info_yn == "1") %>% 
+  distinct(pebt_notes)
+
+
+school_meals %>% 
+  filter(str_detect(pebt_notes, "Flyer|flyer|flier|app")) %>% 
+  distinct(pebt_notes)
+
+school_meals %>% 
+  filter(pebt_info_yn == "1") %>% 
+  distinct(provider_name)  #43 report 
+
+meals_pebt <- 
+  school_meals %>% 
+  filter(pebt_info_yn == "1") %>% 
+  group_by(provider_name) %>% 
+  count(links_to_cfa, links_to_CDSS, contains_original_info, pebt_notes)
+
+# meals_pebt %>% 
+#   write_csv("/Users/ChrisLeBoa/Downloads/pebt_districts.csv")
+
+meals_pebt %>% 
+  mutate(
+    links_to_cfa = as.numeric(links_to_cfa),
+    links_to_CDSS = as.numeric(links_to_CDSS), 
+    contains_original_info = as.numeric(contains_original_info)
+    ) %>% 
+  ungroup() %>% 
+  summarise_at(c("links_to_cfa", "links_to_CDSS", "contains_original_info"), sum, na.rm = TRUE)
+
+```
+
+
+
+#schools ending summer distribution 
+```{r}
+
+#Count months by school location
+school_meals_months %>% 
+  count(end_month) %>% 
+  rename("Number of Schools " = n)
+
+school_meals_months %>%
+  group_by(end_month) %>% 
+  count(provider_name) %>% 
+  count(end_month) %>% 
+  rename("Number of Districts" = n)
+
+school_meals %>% 
+  filter(county != "county") %>% 
+  distinct(county)
+
+
+```
+
+#Manual data 
+```{r}
+
+```
+
