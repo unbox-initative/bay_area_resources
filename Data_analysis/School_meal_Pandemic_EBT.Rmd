@@ -15,10 +15,19 @@ library(googlesheets4)
 ## Read in Data
 
 ```{r cars}
-school_meals <- read_sheet("1fea1BSSAhbSB0HLsatDaD8wxmwsF7ezQjNvjRK-QJQI", col_types = "ccccccccccccccccccccccccccccccccccccccccc")
-
+school_meals <- 
+  read_sheet(
+    ss = "1fea1BSSAhbSB0HLsatDaD8wxmwsF7ezQjNvjRK-QJQI", 
+    skip = 1,
+    col_types = "cccccccccccccccccccccccccccccccc"
+  ) %>% 
+  rename(
+    "district_name" = provider_addloc,
+    "site_name" = provider_name
+  )
+school_meals
 ```
-#Cleaning data 
+## Cleaning data 
 ```{r}
 school_meals_months <- 
   school_meals %>% 
@@ -37,12 +46,13 @@ school_meals_months <-
       str_detect(end_date, "06/|6/") == TRUE ~ "6", 
       str_detect(end_date, "07/|7/") == TRUE ~ "7",
       str_detect(end_date, "08/|8/") == TRUE ~ "8", 
-      is.na(end_date) == TRUE ~ "not specified on school website", 
+      is.na(end_date) == TRUE ~ "until further notice", 
       TRUE ~ end_date
       ),
-    end_month = str_to_lower(end_month)
+    end_month = str_to_lower(end_month),
   ) 
 
+school_meals_months 
 
 ```
 
@@ -50,28 +60,21 @@ school_meals_months <-
 
 ```{r}
 
-
 school_meals %>% 
   filter(!is.na(status), status != "status") %>% 
   count(status)
 
-
-
 school_meals %>% 
-  count(provider_name)
+  distinct(site_name)
 
 school_meals %>% 
   filter(!is.na(status)) %>% 
-  distinct(provider_name) #137 school districts 
-
-
-
-
+  distinct(district_name) #146 school districts 
 
 
 ```
 
-#schools PEBT information details 
+### Schools PEBT information details 
 ```{r}
 
 school_meals %>% 
@@ -89,12 +92,12 @@ school_meals %>%
 
 school_meals %>% 
   filter(pebt_info_yn == "1") %>% 
-  distinct(provider_name)  #43 report 
+  distinct(site_name)  #43 report 
 
 meals_pebt <- 
   school_meals %>% 
   filter(pebt_info_yn == "1") %>% 
-  group_by(provider_name) %>% 
+  group_by(district_name) %>% 
   count(links_to_cfa, links_to_CDSS, contains_original_info, pebt_notes)
 
 # meals_pebt %>% 
@@ -113,19 +116,20 @@ meals_pebt %>%
 
 
 
-#schools ending summer distribution 
+### Schools ending summer distribution 
 ```{r}
 
 #Count months by school location
 school_meals_months %>% 
   count(end_month) %>% 
-  rename("Number of Schools " = n)
+  rename("no_schools" = n) %>% 
+  mutate(pct_schools = no_schools * 100 / sum(no_schools))
 
 school_meals_months %>%
   group_by(end_month) %>% 
-  count(provider_name) %>% 
+  count(district_name, name = "Number of Schools") %>% 
   count(end_month) %>% 
-  rename("Number of Districts" = n)
+  rename("no_districts" = n)
 
 school_meals %>% 
   filter(county != "county") %>% 
@@ -134,8 +138,110 @@ school_meals %>%
 
 ```
 
-#Manual data 
+## Join with CalFresh
 ```{r}
+
+# cflink <- "/Users/joycetagal/Google Drive (jtagal@stanford.edu)/Bay Area Community Resources - Mega map/Data/CalFresh/last_365_by_zip_060120.csv"
+# 
+# cf <- read_csv(cflink)
+# 
+# cf
+
+```
+
+## Join with FRPM
+```{r}
+
+frlink <- "/Users/joycetagal/GitHub/jayktee/bay-area-resources/bay_area_resources/data/frpm1920.xlsx"
+
+frpm <- 
+  readxl::read_xlsx(frlink, sheet = 2, skip = 1) %>% 
+  rename_all(.funs = ~str_to_lower(.) %>% str_replace_all(., " ", "_") %>% str_replace_all(., "[()\\n//-]", "") %>% str_replace(., "%", "pct"))
+
+frpm
+
+```
+
+```{r}
+
+frpm %>% 
+  distinct(district_type)
+
+frpm %>% 
+  distinct(district_name)
+
+```
+
+### Clean district names
+
+```{r}
+
+school_meals_clean <- 
+  school_meals_months %>% 
+  filter(
+    !district_name %in% 
+      c("YMCA Silicon Valley", 
+        "San Mateo County Library",
+        "Voices College Bound",
+        "Ace Charter Schools",
+        "Alpha Public Schools",
+        "Downtown College Prep",
+        "Summit Public Schools",
+        "Rocketship Public Schools"
+      )
+  )
+
+school_meals_clean
+
+```
+
+Checking for intersection between datasets
+
+```{r}
+
+intersect(
+  school_meals_clean %>% 
+  distinct(district_name),
+  frpm %>% 
+  distinct(district_name)
+)
+
+```
+
+```{r}
+library(dplyr)
+districts <- school_meals_clean %>% distinct(district_name) %>% pull()
+
+frpm %>% 
+  filter(district_name %in% districts) %>% 
+  select(
+    academic_year, 
+    county_name, 
+    district_name, 
+    enrollment_k12, 
+    free_meal_count_k12,
+    percent_pct_eligible_free_k12,
+    frpm_count_k12,
+    percent_pct_eligible_frpm_k12
+  ) %>% 
+  dplyr::group_by() %>% 
+  dplyr::summarise(enrollment_k12) # dplyr error here
+
+school_meals_clean %>% 
+  dplyr::group_by(district_name) %>% 
+  dplyr::summarize(pebt_info_yn)
+
+```
+
+
+```{r}
+
+
+# school_meals_clean %>% 
+#   left_join(
+#     f
+#     by = "district_name"
+#   )
 
 ```
 
