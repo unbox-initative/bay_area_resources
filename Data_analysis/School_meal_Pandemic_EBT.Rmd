@@ -48,6 +48,7 @@ school_meals_months <-
       str_detect(end_date, "06/|6/") == TRUE ~ "June", 
       str_detect(end_date, "07/|7/") == TRUE ~ "July",
       str_detect(end_date, "08/|8/") == TRUE ~ "August", 
+      str_detect(end_date, "Until further notice") == TRUE ~ "End date TBC",
       is.na(end_date) == TRUE ~ "End date TBC", 
       TRUE ~ end_date
       )
@@ -124,6 +125,9 @@ meals_pebt %>%
 
 school_meals_months %>% 
   summarize(total_sites = n())
+
+school_meals_months %>% 
+  summarize(total_districts = n_distinct(district_name))
 
 school_meals_months %>% 
   count(end_month) %>% 
