@@ -19,7 +19,7 @@ school_meals <-
   read_sheet(
     ss = "1fea1BSSAhbSB0HLsatDaD8wxmwsF7ezQjNvjRK-QJQI", 
     skip = 1,
-    col_types = "cccccccccccccccccccccccccccccccc"
+    col_types = "ccccccccccccccccccccccccccccccc"
   ) %>% 
   rename(
     "district_name" = provider_addloc,
@@ -27,7 +27,9 @@ school_meals <-
   )
 school_meals
 ```
+
 ## Cleaning data 
+
 ```{r}
 school_meals_months <- 
   school_meals %>% 
@@ -42,14 +44,13 @@ school_meals_months <-
       ),
     end_month = 
       case_when(
-      str_detect(end_date, "05/|5/") == TRUE ~ "not specified on school website",
-      str_detect(end_date, "06/|6/") == TRUE ~ "6", 
-      str_detect(end_date, "07/|7/") == TRUE ~ "7",
-      str_detect(end_date, "08/|8/") == TRUE ~ "8", 
-      is.na(end_date) == TRUE ~ "until further notice", 
+      str_detect(end_date, "05/|5/") == TRUE ~ "End date TBC",
+      str_detect(end_date, "06/|6/") == TRUE ~ "June", 
+      str_detect(end_date, "07/|7/") == TRUE ~ "July",
+      str_detect(end_date, "08/|8/") == TRUE ~ "August", 
+      is.na(end_date) == TRUE ~ "End date TBC", 
       TRUE ~ end_date
-      ),
-    end_month = str_to_lower(end_month),
+      )
   ) 
 
 school_meals_months 
@@ -120,6 +121,10 @@ meals_pebt %>%
 ```{r}
 
 #Count months by school location
+
+school_meals_months %>% 
+  summarize(total_sites = n())
+
 school_meals_months %>% 
   count(end_month) %>% 
   rename("no_schools" = n) %>% 
@@ -209,10 +214,10 @@ intersect(
 ```
 
 ```{r}
-library(dplyr)
 districts <- school_meals_clean %>% distinct(district_name) %>% pull()
 
-frpm %>% 
+frpm_districts <- 
+  frpm %>% 
   filter(district_name %in% districts) %>% 
   select(
     academic_year, 
@@ -224,24 +229,108 @@ frpm %>%
     frpm_count_k12,
     percent_pct_eligible_frpm_k12
   ) %>% 
-  dplyr::group_by() %>% 
-  dplyr::summarise(enrollment_k12) # dplyr error here
+  group_by(district_name) %>% 
+  summarize(
+    total_enroll = sum(enrollment_k12),
+    free_meal_count_k12 = sum(free_meal_count_k12),
+    frpm_count_k12 = sum(frpm_count_k12)
+  ) %>% 
+  mutate(
+    percent_pct_eligible_free_k12 = free_meal_count_k12 / total_enroll,
+    percent_pct_eligible_frpm_k12 = frpm_count_k12 / total_enroll
+  )
 
-school_meals_clean %>% 
-  dplyr::group_by(district_name) %>% 
-  dplyr::summarize(pebt_info_yn)
+frpm_districts %>% summarise(total_enroll = sum(total_enroll))
 
 ```
 
 
 ```{r}
 
-
-# school_meals_clean %>% 
+# school_meals_clean %>%
 #   left_join(
-#     f
+#     frpm_districts,
 #     by = "district_name"
-#   )
+#   ) %>% 
+#   group_by(district_name) %>% 
+#   summarize(total_enroll = sum(total_enroll), .groups = "drop_last")
+
+school_meals_average <- 
+  school_meals_clean %>%
+  group_by(district_name) %>% 
+  count(end_month, name = "num_schools") %>% 
+  left_join(
+    frpm_districts,
+    by = "district_name"
+  ) %>% 
+  group_by(end_month) %>%
+  summarize(
+    num_schools = sum(num_schools),
+    total_enroll = sum(total_enroll),
+    total_free_eligible = sum(free_meal_count_k12),
+    total_frpm_eligible = sum(frpm_count_k12),
+  .groups = "keep") %>% 
+  mutate(
+    percent_eligible_free_k12 = total_free_eligible / total_enroll,
+    percent_eligible_frpm_k12 = total_frpm_eligible / total_enroll
+  ) %>% 
+  pivot_longer(
+    cols = c(percent_eligible_free_k12, percent_eligible_frpm_k12),
+    names_to = "type",
+    values_to = "percent_eligible"
+  ) 
+
+school_meals_average
+
+```
+
+```{r}
+
+## DO NOT USE YET
+school_meals_average %>% 
+  filter(type == "percent_eligible_frpm_k12") %>% 
+  ggplot(aes(x = end_month, y = percent_eligible)) +
+  geom_col() +
+  ggrepel::geom_text_repel(
+    aes(label = scales::percent(percent_eligible)),
+    direction = "y",
+    nudge_y = 0.01,
+    size = 3.5
+  ) +
+  scale_y_continuous(labels = scales::label_percent(accuracy = 1)) +
+  coord_cartesian(expand = TRUE) +
+  labs(
+    title = "Average percentage of children eligible for FRPM in districts closing meal sites",
+    y = "Average percentage children eligible for Free-Reduced Meals",
+    x = "Months"
+  )
+ggsave("percentage_districts.png", height = 5, width = 7)
+  
+
+school_meals_average %>% 
+  filter(type == "percent_eligible_frpm_k12") %>% 
+  ggplot(aes(x = end_month, y = total_frpm_eligible)) +
+  geom_col() +
+  ggrepel::geom_text_repel(
+    aes(label = scales::comma(total_frpm_eligible)),
+    direction = "y",
+    nudge_y = 3,
+    size = 3.5
+  ) +
+  scale_y_continuous(labels = scales::label_number_si(accuracy = 1)) +
+  coord_cartesian(expand = TRUE) +
+  labs(
+    title = "Number of children eligible for FRPM in districts closing meal sites",
+    y = "Total children eligible for Free-Reduced Meals",
+    x = "Months"
+  )
+ggsave("total_districts.png", height = 4, width = 7)
+
+# school_meals_average %>% 
+#   filter(type == "percent_eligible_frpm_k12") %>% 
+#   ggplot(aes(x = end_month, y = total_enroll)) +
+#   geom_col()
+
 
 ```
 
