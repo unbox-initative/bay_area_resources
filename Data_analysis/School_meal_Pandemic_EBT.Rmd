@@ -2,7 +2,9 @@
 title: "School_meals_report"
 author: "Chris LeBoa"
 date: "6/12/2020"
-output: html_document
+output: 
+  github_document:
+    toc: true
 ---
 
 #Load Packages
