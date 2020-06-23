@@ -1,6 +1,6 @@
 ---
 title: "School_meals_report"
-author: "Chris LeBoa"
+author: "Chris LeBoa & Joyce Tagal"
 date: "6/12/2020"
 output: 
   github_document:
