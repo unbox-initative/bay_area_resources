@@ -1,0 +1,68 @@
+---
+title: "CalFresh/School Meals analysis"
+author: "Joyce Tagal"
+date: "`r Sys.Date()`"
+output: 
+  github_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+# Libraries
+library(tidyverse)
+library(sf)
+
+# Parameters
+sd_link <- "/Users/joycetagal/GitHub/jayktee/bay-area-resources/bay_area_resources/data/NCES School district boundaries EDGE_SCHOOLDISTRICT_TL19_SY1819/schooldistrict_sy1819_tl19.shp"
+
+zc_link <- "/Users/joycetagal/GitHub/jayktee/bay-area-resources/bay_area_resources/data/Data.gov Zipcode boundaries tl_2019_us_zcta510/tl_2019_us_zcta510.shp"
+
+cfzip_link <- "/Users/joycetagal/GitHub/jayktee/bay-area-resources/bay_area_resources/data/CalFresh/by_zip_pre_postMar15.csv"
+
+#===============================================================================
+
+```
+
+## Download data
+
+```{r}
+
+cfzip <- read_csv(cfzip_link)
+
+cfzip
+
+```
+
+```{r}
+
+zip <- 
+  read_sf(zc_link)
+
+zip
+```
+
+```{r}
+
+sd <- 
+  read_sf(sd_link)
+
+sd
+```
+
+
+
+1. expand_grid - tidy tibble with one column = all combinations of zipcode and school districts
+2. function - st_intersects. if those two boundaries intersect -> TRUE
+-> filter out all zipcodes that overlap with a school district
+3. st_area - give the area of each zipcode
+4. st_intersection - gives the intersection area between zipcode and sd
+5. st_area on the intersection - gives a percentage of the intersection area vs 
+the total area of the school district.
+6. Provides the ratio of children in that zipcode re: district area
+
+
+
