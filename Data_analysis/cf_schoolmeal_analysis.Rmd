@@ -15,13 +15,30 @@ knitr::opts_chunk$set(echo = TRUE)
 # Libraries
 library(tidyverse)
 library(sf)
+library(googlesheets4)
 
 # Parameters
-sd_link <- "/Users/joycetagal/GitHub/jayktee/bay-area-resources/bay_area_resources/data/NCES School district boundaries EDGE_SCHOOLDISTRICT_TL19_SY1819/schooldistrict_sy1819_tl19.shp"
+sd_link <- here::here("data/NCES School district boundaries EDGE_SCHOOLDISTRICT_TL19_SY1819/schooldistrict_sy1819_tl19.shp")
 
-zc_link <- "/Users/joycetagal/GitHub/jayktee/bay-area-resources/bay_area_resources/data/Data.gov Zipcode boundaries tl_2019_us_zcta510/tl_2019_us_zcta510.shp"
+zc_link <- here::here("data/earthworks_ztca_ba/ZIPCODE.shp")
 
-cfzip_link <- "/Users/joycetagal/GitHub/jayktee/bay-area-resources/bay_area_resources/data/CalFresh/by_zip_pre_postMar15.csv"
+cfzip_link <- here::here("data/CalFresh/by_zip_pre_postMar15.csv")
+
+ba_geoid <- c(
+  "0606001", 
+  "0606013", 
+  "0606085", 
+  "0606055", 
+  "0606097", 
+  "0606041", 
+  "0606075", 
+  "0606095", 
+  "0606081"
+  )
+
+
+CA_ALBERS <- 
+  "+proj=aea +lat_1=34 +lat_2=40.5 +lat_0=0 +lon_0=-120 +x_0=0 +y_0=-4000000 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 
 #===============================================================================
 
@@ -37,22 +54,64 @@ cfzip
 
 ```
 
+
+
 ```{r}
 
-zip <- 
-  read_sf(zc_link)
 
-zip
+zip <- 
+  read_sf(zc_link) 
+
+st_crs(zip)
+
+zip %>% 
+  ggplot() +
+  geom_sf()
+
 ```
 
 ```{r}
 
 sd <- 
-  read_sf(sd_link)
+  read_sf(sd_link) %>% 
+  filter(STATEFP == "06")
 
-sd
+st_crs(sd)
+
+sd %>%
+  ggplot() +
+  geom_sf()
+
 ```
 
+## Check zips between Bay 
+
+```{r}
+school_meals <- 
+  read_sheet(
+    ss = "1fea1BSSAhbSB0HLsatDaD8wxmwsF7ezQjNvjRK-QJQI", 
+    skip = 1,
+    col_types = "ccccccccccccccccccccccccccccccc"
+  ) %>% 
+  rename(
+    "district_name" = provider_addloc,
+    "site_name" = provider_name
+  )
+school_meals
+```
+
+Check zips
+
+```{r}
+school_meals %>% 
+  distinct(zip) %>% 
+  pull()
+
+zip %>% 
+  distinct(ZIP_CODE_5) %>% 
+  pull()
+
+```
 
 
 1. expand_grid - tidy tibble with one column = all combinations of zipcode and school districts
@@ -64,5 +123,19 @@ sd
 the total area of the school district.
 6. Provides the ratio of children in that zipcode re: district area
 
+```{r}
+sd %>% 
+  filter(str_detect(NAME, "Dublin")) 
 
+```
+
+
+```{r}
+
+ggplot() +
+  geom_sf(data = zip) +
+  geom_sf(data = sd, color = "red")
+
+
+```
 
