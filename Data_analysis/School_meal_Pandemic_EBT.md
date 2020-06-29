@@ -28,9 +28,10 @@ This document analyzes the number of students eligible for Free and
 Reduced Price Meals (FRPM) that will be affected by Bay Area school meal
 site closures over the summer period of June-August 2020. We find that
 school districts closing in early months of the summer (June and July
-2020) have a higher than average percentage (66%) of students who are
-FRPM-eligible. In June and July 2020, the closing of school sites will
-affect over 250,000 FRPM eligible students.
+2020) have a higher than average percentage (53%) of students who are
+FRPM-eligible, compared to an average of 45% of FRPM across districts
+which are closing post-July. In June and July 2020, the closing of
+school sites will affect over 250,000 FRPM eligible students.
 
 ## Data sources and Assumptions
 
@@ -71,6 +72,8 @@ school_meals <-
     "site_name" = provider_name
   )
 ```
+
+    ## Auto-refreshing stale OAuth token.
 
     ## Reading from "Bay Area School Meal Sites"
 
@@ -583,7 +586,7 @@ school_meals_average <-
   group_by(end_month) %>%
   summarize(
     num_districts = n_distinct(district_name),
-    num_schools = sum(num_schools_closing),
+    num_schools_closing = sum(num_schools_closing),
     sum_schools = sum(sum_schools),
     total_frac_enroll = sum(frac_enroll),
     total_frac_free_eligible = sum(frac_free_meal_count_k12),
@@ -601,12 +604,12 @@ school_meals_average
 
     ## # A tibble: 4 x 9
     ## # Groups:   end_month [4]
-    ##   end_month num_districts num_schools sum_schools total_frac_enro…
-    ##   <fct>             <int>       <int>       <int>            <dbl>
-    ## 1 August               23          92         115          207856.
-    ## 2 End date…            39         180         182          404852.
-    ## 3 July                 22         127         136          238852.
-    ## 4 June                 26         105         124          265848.
+    ##   end_month num_districts num_schools_clo… sum_schools total_frac_enro…
+    ##   <fct>             <int>            <int>       <int>            <dbl>
+    ## 1 August               23               92         115          207856.
+    ## 2 End date…            39              180         182          404852.
+    ## 3 July                 22              127         136          238852.
+    ## 4 June                 26              105         124          265848.
     ## # … with 4 more variables: total_frac_free_eligible <dbl>,
     ## #   total_frac_frpm_eligible <dbl>, percent_eligible_free_k12 <dbl>,
     ## #   percent_eligible_frpm_k12 <dbl>
@@ -615,7 +618,13 @@ school_meals_average
 
 The analysis shows that the 22 school districts which are closing school
 sites in July have a higher-than-average percentage of children on FRPM
-(\~65.9%).
+(\~65.9%) compared to an average of 42.8343191%.
+
+Overall, the percentage of students on FRPM across districts closing in
+June and July is 53%, compared to 44% FRPM studentsfor districts closing
+in August and beyond. The school meal site closures directly impact
+districts with a higher proportion of students eligible for free and
+reduced lunch.
 
 ``` r
 school_meals_average %>% 
@@ -669,4 +678,44 @@ ggsave("total_districts.png", height = 4, width = 7)
 #   filter(type == "percent_eligible_frpm_k12") %>% 
 #   ggplot(aes(x = end_month, y = total_enroll)) +
 #   geom_col()
+```
+
+``` r
+school_meals_average %>% 
+  mutate(
+    time_period = 
+      if_else(
+        end_month %in% c("June", "July"), "June and July", "August and beyond"
+    ),
+    time_period = factor(time_period, levels = c("June and July", "August and beyond"))
+  ) %>% 
+  group_by(time_period) %>% 
+  summarize(
+    total_frac_enroll = sum(total_frac_enroll),
+    total_frac_frpm_eligible = sum(total_frac_frpm_eligible)
+  ) %>% 
+  mutate(percent_eligible_frpm_k12 = total_frac_frpm_eligible / total_frac_enroll) %>% 
+  ggplot(aes(x = time_period, y = percent_eligible_frpm_k12)) +
+  geom_col() +
+  ggrepel::geom_text_repel(
+    aes(label = scales::percent(percent_eligible_frpm_k12)),
+    direction = "y",
+    nudge_y = 0.01,
+    size = 3.5
+  ) +
+  scale_y_continuous(labels = scales::label_percent(accuracy = 1)) +
+  coord_cartesian(expand = TRUE) +
+  labs(
+    title = "Average percentage of children eligible for FRPM in districts closing meal sites",
+    y = "Average percentage children eligible for Free-Reduced Meals",
+    x = "Time Period"
+  )
+```
+
+    ## `summarise()` ungrouping output (override with `.groups` argument)
+
+![](School_meal_Pandemic_EBT_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+``` r
+ggsave("timeperiods.png", height = 4, width = 7)
 ```
