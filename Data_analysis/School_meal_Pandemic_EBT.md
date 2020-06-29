@@ -1,8 +1,11 @@
 School\_meals\_report
 ================
-Chris LeBoa
-6/12/2020
+Chris LeBoa & Joyce Tagal
+2020-06-28
 
+  - [Overview](#overview)
+  - [Data sources and Assumptions](#data-sources-and-assumptions)
+  - [Load Packages](#load-packages)
   - [Read in Data](#read-in-data)
   - [Cleaning data](#cleaning-data)
   - [Basic counts of schools still
@@ -11,11 +14,49 @@ Chris LeBoa
         details](#schools-pebt-information-details)
       - [Schools ending summer
         distribution](#schools-ending-summer-distribution)
-  - [Join with CalFresh](#join-with-calfresh)
   - [Join with FRPM](#join-with-frpm)
       - [Clean district names](#clean-district-names)
+      - [Checking for intersection between
+        datasets](#checking-for-intersection-between-datasets)
+  - [Averaging district population across school
+    closures](#averaging-district-population-across-school-closures)
+  - [Conclusion and GGPlot](#conclusion-and-ggplot)
 
-\#Load Packages
+## Overview
+
+This document analyzes the number of students eligible for Free and
+Reduced Price Meals (FRPM) that will be affected by Bay Area school meal
+site closures over the summer period of June-August 2020. We find that
+school districts closing in early months of the summer (June and July
+2020) have a higher than average percentage (53%) of students who are
+FRPM-eligible, compared to an average of 45% of FRPM across districts
+which are closing post-July. In June and July 2020, the closing of
+school sites will affect over 250,000 FRPM eligible students.
+
+## Data sources and Assumptions
+
+This document uses two main data sources:
+
+  - [CA Dept of Ed](https://www.cde.ca.gov/ds/sd/sd/filessp.asp) Free
+    and Reduced Price Meal data for school year 2019-20
+  - [BayAreaCommunity.org](https://www.bayareacommunity.org/#/) school
+    meal sites info, that has been updated on a weekly basis from March
+    2020 to present.
+
+In this analysis we make several assumptions:
+
+  - Students and their families are most able to access meal sites
+    within their school districts. This assumption may not hold for
+    denser, urban areas where a student may access meal sites in a
+    neighboring school district. However, given that a not-insignificant
+    number of school districts only allow district students to access
+    the school meals, this may hold on average.
+  - In averaging numbers of FRPM students across a district, we take a
+    simple average of FRPM students across schools within the district.
+    This assumes an equal distribution of FRPM across schools, and a
+    similar total enrollment across schools.
+
+## Load Packages
 
 ## Read in Data
 
@@ -31,6 +72,8 @@ school_meals <-
     "site_name" = provider_name
   )
 ```
+
+    ## Auto-refreshing stale OAuth token.
 
     ## Reading from "Bay Area School Meal Sites"
 
@@ -178,7 +221,7 @@ school_meals %>%
     ## # A tibble: 2 x 2
     ##   pebt_info_yn     n
     ##   <chr>        <int>
-    ## 1 0              387
+    ## 1 0              409
     ## 2 1              351
 
 ``` r
@@ -199,7 +242,7 @@ school_meals %>%
     ##  7 https://www.mynhusd.org/apps/news/article/1233836                            
     ##  8 https://twitter.com/nusdschoolnews                                           
     ##  9 https://4.files.edl.io/acea/05/19/20/175812-db1f27cc-de08-4cfa-863c-b57b0501…
-    ## 10 <NA>                                                                         
+    ## 10 0                                                                            
     ## # … with 45 more rows
 
 ``` r
@@ -354,53 +397,23 @@ school_meals %>%
     ## 14 Sonoma             
     ## 15 Stanislaus
 
-## Join with CalFresh
-
-``` r
-# cflink <- "/Users/joycetagal/Google Drive (jtagal@stanford.edu)/Bay Area Community Resources - Mega map/Data/CalFresh/last_365_by_zip_060120.csv"
-# 
-# cf <- read_csv(cflink)
-# 
-# cf
-```
-
 ## Join with FRPM
 
 ``` r
-frlink <- "/Users/joycetagal/GitHub/jayktee/bay-area-resources/bay_area_resources/data/frpm1920.xlsx"
+frlink <- here::here("data/frpm1920.xlsx")
 
 frpm <- 
   readxl::read_xlsx(frlink, sheet = 2, skip = 1) %>% 
   rename_all(.funs = ~str_to_lower(.) %>% str_replace_all(., " ", "_") %>% str_replace_all(., "[()\\n//-]", "") %>% str_replace(., "%", "pct"))
 
-frpm
+frpm %>% 
+  summarize(sum = sum(frpm_count_k12))
 ```
 
-    ## # A tibble: 10,592 x 28
-    ##    academic_year county_code district_code school_code county_name district_name
-    ##    <chr>         <chr>       <chr>         <chr>       <chr>       <chr>        
-    ##  1 2019-2020     01          10017         0112607     Alameda     Alameda Coun…
-    ##  2 2019-2020     01          10017         0123968     Alameda     Alameda Coun…
-    ##  3 2019-2020     01          10017         0124172     Alameda     Alameda Coun…
-    ##  4 2019-2020     01          10017         0125567     Alameda     Alameda Coun…
-    ##  5 2019-2020     01          10017         0129403     Alameda     Alameda Coun…
-    ##  6 2019-2020     01          10017         0130401     Alameda     Alameda Coun…
-    ##  7 2019-2020     01          10017         0130419     Alameda     Alameda Coun…
-    ##  8 2019-2020     01          10017         0131581     Alameda     Alameda Coun…
-    ##  9 2019-2020     01          10017         0136101     Alameda     Alameda Coun…
-    ## 10 2019-2020     01          10017         0136226     Alameda     Alameda Coun…
-    ## # … with 10,582 more rows, and 22 more variables: school_name <chr>,
-    ## #   district_type <chr>, school_type <chr>, educational_option_type <chr>,
-    ## #   `nslp_\rprovision_\rstatus` <chr>, `charter_\rschool_\ryn` <chr>,
-    ## #   `charter_\rschool_\rnumber` <chr>, `charter_\rfunding_\rtype` <chr>,
-    ## #   irc <chr>, low_grade <chr>, high_grade <chr>, enrollment_k12 <dbl>,
-    ## #   free_meal_count_k12 <dbl>, percent_pct_eligible_free_k12 <dbl>,
-    ## #   frpm_count_k12 <dbl>, percent_pct_eligible_frpm_k12 <dbl>,
-    ## #   `enrollment_\rages_517` <dbl>, `free_meal_count_\rages_517` <dbl>,
-    ## #   `percent_pct_eligible_free_\rages_517` <dbl>,
-    ## #   `frpm_count_\rages_517` <dbl>,
-    ## #   `percent_pct_\religible_frpm_\rages_517` <dbl>,
-    ## #   `calpads_fall_1_\rcertification_status` <chr>
+    ## # A tibble: 1 x 1
+    ##       sum
+    ##     <dbl>
+    ## 1 3654943
 
 ``` r
 frpm %>% 
@@ -481,7 +494,7 @@ school_meals_clean
     ## #   verified_by <chr>, meals_served <chr>, internal_notes <chr>,
     ## #   called_school_district <chr>, call_date <chr>, end_month <chr>
 
-Checking for intersection between datasets
+### Checking for intersection between datasets
 
 ``` r
 intersect(
@@ -546,65 +559,79 @@ frpm_districts %>% summarise(total_enroll = sum(total_enroll))
     ##          <dbl>
     ## 1      1117408
 
-``` r
-# school_meals_clean %>%
-#   left_join(
-#     frpm_districts,
-#     by = "district_name"
-#   ) %>% 
-#   group_by(district_name) %>% 
-#   summarize(total_enroll = sum(total_enroll), .groups = "drop_last")
+## Averaging district population across school closures
 
+Assuming an equal distribution of density across counties, we assume an
+average of students on free meals and free and reduced price meals
+across closing schools.
+
+``` r
+level_key <- c("June", "July", "August", "End date TBC")
 school_meals_average <- 
   school_meals_clean %>%
   group_by(district_name) %>% 
-  count(end_month, name = "num_schools") %>% 
+  count(end_month, name = "num_schools_closing") %>% 
+  group_by(district_name) %>% 
+  arrange(district_name) %>% 
+  add_tally(num_schools_closing, name = "sum_schools") %>% 
   left_join(
     frpm_districts,
     by = "district_name"
   ) %>% 
+  mutate(
+    frac_enroll = num_schools_closing / sum_schools * total_enroll,
+    frac_free_meal_count_k12 = num_schools_closing / sum_schools * free_meal_count_k12,
+    frac_frpm_count_k12 = num_schools_closing / sum_schools * frpm_count_k12
+  ) %>% 
   group_by(end_month) %>%
   summarize(
-    num_schools = sum(num_schools),
-    total_enroll = sum(total_enroll),
-    total_free_eligible = sum(free_meal_count_k12),
-    total_frpm_eligible = sum(frpm_count_k12),
+    num_districts = n_distinct(district_name),
+    num_schools_closing = sum(num_schools_closing),
+    sum_schools = sum(sum_schools),
+    total_frac_enroll = sum(frac_enroll),
+    total_frac_free_eligible = sum(frac_free_meal_count_k12),
+    total_frac_frpm_eligible = sum(frac_frpm_count_k12),
   .groups = "keep") %>% 
   mutate(
-    percent_eligible_free_k12 = total_free_eligible / total_enroll,
-    percent_eligible_frpm_k12 = total_frpm_eligible / total_enroll
+    percent_eligible_free_k12 = total_frac_free_eligible / total_frac_enroll,
+    percent_eligible_frpm_k12 = total_frac_frpm_eligible / total_frac_enroll
   ) %>% 
-  pivot_longer(
-    cols = c(percent_eligible_free_k12, percent_eligible_frpm_k12),
-    names_to = "type",
-    values_to = "percent_eligible"
-  ) 
+  mutate(end_month = factor(end_month, levels = level_key))
+
 
 school_meals_average
 ```
 
-    ## # A tibble: 8 x 7
+    ## # A tibble: 4 x 9
     ## # Groups:   end_month [4]
-    ##   end_month num_schools total_enroll total_free_elig… total_frpm_elig… type 
-    ##   <chr>           <int>        <dbl>            <dbl>            <dbl> <chr>
-    ## 1 August             92       260319            92352           107748 perc…
-    ## 2 August             92       260319            92352           107748 perc…
-    ## 3 End date…         180       406419           160545           186554 perc…
-    ## 4 End date…         180       406419           160545           186554 perc…
-    ## 5 July              127       251314           145039           164183 perc…
-    ## 6 July              127       251314           145039           164183 perc…
-    ## 7 June              105       296637           100389           119507 perc…
-    ## 8 June              105       296637           100389           119507 perc…
-    ## # … with 1 more variable: percent_eligible <dbl>
+    ##   end_month num_districts num_schools_clo… sum_schools total_frac_enro…
+    ##   <fct>             <int>            <int>       <int>            <dbl>
+    ## 1 August               23               92         115          207856.
+    ## 2 End date…            39              180         182          404852.
+    ## 3 July                 22              127         136          238852.
+    ## 4 June                 26              105         124          265848.
+    ## # … with 4 more variables: total_frac_free_eligible <dbl>,
+    ## #   total_frac_frpm_eligible <dbl>, percent_eligible_free_k12 <dbl>,
+    ## #   percent_eligible_frpm_k12 <dbl>
+
+## Conclusion and GGPlot
+
+The analysis shows that the 22 school districts which are closing school
+sites in July have a higher-than-average percentage of children on FRPM
+(\~65.9%) compared to an average of 42.8343191%.
+
+Overall, the percentage of students on FRPM across districts closing in
+June and July is 53%, compared to 44% FRPM studentsfor districts closing
+in August and beyond. The school meal site closures directly impact
+districts with a higher proportion of students eligible for free and
+reduced lunch.
 
 ``` r
-## DO NOT USE YET
 school_meals_average %>% 
-  filter(type == "percent_eligible_frpm_k12") %>% 
-  ggplot(aes(x = end_month, y = percent_eligible)) +
+  ggplot(aes(x = end_month, y = percent_eligible_frpm_k12)) +
   geom_col() +
   ggrepel::geom_text_repel(
-    aes(label = scales::percent(percent_eligible)),
+    aes(label = scales::percent(percent_eligible_frpm_k12)),
     direction = "y",
     nudge_y = 0.01,
     size = 3.5
@@ -625,11 +652,10 @@ ggsave("percentage_districts.png", height = 5, width = 7)
   
 
 school_meals_average %>% 
-  filter(type == "percent_eligible_frpm_k12") %>% 
-  ggplot(aes(x = end_month, y = total_frpm_eligible)) +
+  ggplot(aes(x = end_month, y = total_frac_frpm_eligible)) +
   geom_col() +
   ggrepel::geom_text_repel(
-    aes(label = scales::comma(total_frpm_eligible)),
+    aes(label = scales::comma(total_frac_frpm_eligible)),
     direction = "y",
     nudge_y = 3,
     size = 3.5
@@ -652,4 +678,44 @@ ggsave("total_districts.png", height = 4, width = 7)
 #   filter(type == "percent_eligible_frpm_k12") %>% 
 #   ggplot(aes(x = end_month, y = total_enroll)) +
 #   geom_col()
+```
+
+``` r
+school_meals_average %>% 
+  mutate(
+    time_period = 
+      if_else(
+        end_month %in% c("June", "July"), "June and July", "August and beyond"
+    ),
+    time_period = factor(time_period, levels = c("June and July", "August and beyond"))
+  ) %>% 
+  group_by(time_period) %>% 
+  summarize(
+    total_frac_enroll = sum(total_frac_enroll),
+    total_frac_frpm_eligible = sum(total_frac_frpm_eligible)
+  ) %>% 
+  mutate(percent_eligible_frpm_k12 = total_frac_frpm_eligible / total_frac_enroll) %>% 
+  ggplot(aes(x = time_period, y = percent_eligible_frpm_k12)) +
+  geom_col() +
+  ggrepel::geom_text_repel(
+    aes(label = scales::percent(percent_eligible_frpm_k12)),
+    direction = "y",
+    nudge_y = 0.01,
+    size = 3.5
+  ) +
+  scale_y_continuous(labels = scales::label_percent(accuracy = 1)) +
+  coord_cartesian(expand = TRUE) +
+  labs(
+    title = "Average percentage of children eligible for FRPM in districts closing meal sites",
+    y = "Average percentage children eligible for Free-Reduced Meals",
+    x = "Time Period"
+  )
+```
+
+    ## `summarise()` ungrouping output (override with `.groups` argument)
+
+![](School_meal_Pandemic_EBT_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+``` r
+ggsave("timeperiods.png", height = 4, width = 7)
 ```
