@@ -73,8 +73,6 @@ school_meals <-
   )
 ```
 
-    ## Auto-refreshing stale OAuth token.
-
     ## Reading from "Bay Area School Meal Sites"
 
     ## Range "2:5000000"
@@ -641,7 +639,8 @@ school_meals_average %>%
   labs(
     title = "Average percentage of children eligible for FRPM in districts closing meal sites",
     y = "Average percentage children eligible for Free-Reduced Meals",
-    x = "Months"
+    x = "Months",
+    caption = "Source: CA Dept of Ed; BayAreaCommunity.org"
   )
 ```
 
@@ -665,7 +664,8 @@ school_meals_average %>%
   labs(
     title = "Number of children eligible for FRPM in districts closing meal sites",
     y = "Total children eligible for Free-Reduced Meals",
-    x = "Months"
+    x = "Months",
+    caption = "Source: CA Dept of Ed; BayAreaCommunity.org"
   )
 ```
 
@@ -708,7 +708,8 @@ school_meals_average %>%
   labs(
     title = "Average percentage of children eligible for FRPM in districts closing meal sites",
     y = "Average percentage children eligible for Free-Reduced Meals",
-    x = "Time Period"
+    x = "Time Period",
+    caption = "Source: CA Dept of Ed; BayAreaCommunity.org"
   )
 ```
 

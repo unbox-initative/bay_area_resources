@@ -345,7 +345,8 @@ school_meals_average %>%
   labs(
     title = "Average percentage of children eligible for FRPM in districts closing meal sites",
     y = "Average percentage children eligible for Free-Reduced Meals",
-    x = "Months"
+    x = "Months",
+    caption = "Source: CA Dept of Ed; BayAreaCommunity.org"
   )
 ggsave("percentage_districts.png", height = 5, width = 7)
   
@@ -364,7 +365,8 @@ school_meals_average %>%
   labs(
     title = "Number of children eligible for FRPM in districts closing meal sites",
     y = "Total children eligible for Free-Reduced Meals",
-    x = "Months"
+    x = "Months",
+    caption = "Source: CA Dept of Ed; BayAreaCommunity.org"
   )
 ggsave("total_districts.png", height = 4, width = 7)
 
@@ -405,7 +407,8 @@ school_meals_average %>%
   labs(
     title = "Average percentage of children eligible for FRPM in districts closing meal sites",
     y = "Average percentage children eligible for Free-Reduced Meals",
-    x = "Time Period"
+    x = "Time Period",
+    caption = "Source: CA Dept of Ed; BayAreaCommunity.org"
   )
 
 ggsave("timeperiods.png", height = 4, width = 7)
