@@ -20,9 +20,11 @@ library(googlesheets4)
 # Parameters
 sd_link <- here::here("data/NCES School district boundaries EDGE_SCHOOLDISTRICT_TL19_SY1819/schooldistrict_sy1819_tl19.shp")
 
-zc_link <- here::here("data/earthworks_ztca_ba/ZIPCODE.shp")
+zc_link <- here::here("data/Bay Area ZIP Codes/geo_export_24b81bd6-6208-4590-bb1a-24867e0b57d7.shp")
 
 cfzip_link <- here::here("data/CalFresh/by_zip_pre_postMar15.csv")
+
+zcta_link <- here::here("data/Data.gov Zipcode boundaries tl_2019_us_zcta510/tl_2019_us_zcta510.shp")
 
 ba_geoid <- c(
   "0606001", 
@@ -50,21 +52,48 @@ CA_ALBERS <-
 
 cfzip <- read_csv(cfzip_link)
 
-cfzip
+cfzip %>% 
+  group_by(post_mar15) %>% 
+  summarize(
+    total_school_age = sum(total_school_age),
+    total_apps = sum(total_apps)
+  )
 
+```
+
+```{r}
+bay_zctas %>% 
+  distinct(County)
 ```
 
 
 
 ```{r}
 
-
 zip <- 
-  read_sf(zc_link) 
+  read_sf(zc_link) %>% 
+  st_transform(crs = CA_ALBERS)
 
 st_crs(zip)
 
 zip %>% 
+  ggplot() +
+  geom_sf()
+
+```
+
+```{r}
+
+zcta <- 
+  read_sf(zcta_link) %>% 
+  filter()
+
+zcta 
+  st_transform(zcta, crs = CA_ALBERS)
+
+st_crs(zcta)
+
+zcta %>% 
   ggplot() +
   geom_sf()
 
@@ -100,19 +129,33 @@ school_meals <-
 school_meals
 ```
 
-Check zips
+Check zips between files
 
 ```{r}
-school_meals %>% 
-  distinct(zip) %>% 
-  pull()
 
-zip %>% 
-  distinct(ZIP_CODE_5) %>% 
-  pull()
+length(setdiff(
+  zip %>% 
+  distinct(zip) %>% 
+  st_set_geometry(NULL) %>% 
+  pull(), 
+  school_meals %>% 
+  distinct(zip) %>% 
+  pull()))
 
 ```
 
+```{r}
+
+length(setdiff( 
+  school_meals %>% 
+  distinct(zip) %>% 
+  pull(),
+  zip %>% 
+  distinct(zip) %>% 
+  st_set_geometry(NULL) %>% 
+  pull()))
+
+```
 
 1. expand_grid - tidy tibble with one column = all combinations of zipcode and school districts
 2. function - st_intersects. if those two boundaries intersect -> TRUE
