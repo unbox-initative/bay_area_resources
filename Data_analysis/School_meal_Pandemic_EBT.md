@@ -1,7 +1,7 @@
-School\_meals\_report
+FRPM analysis
 ================
 Chris LeBoa & Joyce Tagal
-2020-06-28
+2020-07-06
 
   - [Overview](#overview)
   - [Data sources and Assumptions](#data-sources-and-assumptions)
@@ -81,7 +81,7 @@ school_meals <-
 school_meals
 ```
 
-    ## # A tibble: 760 x 31
+    ## # A tibble: 762 x 31
     ##    site_name address city  zip   lat   lon   district_name status pebt_info_yn
     ##    <chr>     <chr>   <chr> <chr> <chr> <chr> <chr>         <chr>  <chr>       
     ##  1 Junction… 298 Ju… Live… 94551 37.6… -121… Livermore Va… Open   1           
@@ -94,7 +94,7 @@ school_meals
     ##  8 Berkeley… 2015 V… Berk… 94709 37.8… -122… Berkeley Uni… Closed 1           
     ##  9 Washingt… 2300 M… Berk… 94707 37.8… -122… Berkeley Uni… Open   1           
     ## 10 Rosa Par… 920 Al… Berk… 94710 37.8… -122… Berkeley Uni… Open   1           
-    ## # … with 750 more rows, and 22 more variables: ebt_homepage <chr>,
+    ## # … with 752 more rows, and 22 more variables: ebt_homepage <chr>,
     ## #   pebt_notes <chr>, contains_original_info <chr>, links_to_CDSS <chr>,
     ## #   links_to_cfa <chr>, open_hour <chr>, close_hour <chr>, notes <chr>,
     ## #   notes_es <chr>, days_of_week <chr>, county <chr>, phone <chr>, email <chr>,
@@ -131,7 +131,7 @@ school_meals_months <-
 school_meals_months 
 ```
 
-    ## # A tibble: 546 x 32
+    ## # A tibble: 492 x 32
     ##    site_name address city  zip   lat   lon   district_name status pebt_info_yn
     ##    <chr>     <chr>   <chr> <chr> <chr> <chr> <chr>         <chr>  <chr>       
     ##  1 Junction… 298 Ju… Live… 94551 37.6… -121… Livermore Va… Open   1           
@@ -144,7 +144,7 @@ school_meals_months
     ##  8 Rosa Par… 920 Al… Berk… 94710 37.8… -122… Berkeley Uni… Open   1           
     ##  9 Longfell… 1522 W… Berk… 95704 37.8… -122… Berkeley Uni… Open   1           
     ## 10 Berkeley… 1980 A… Berk… 94704 37.8… -122… Berkeley Uni… Open   1           
-    ## # … with 536 more rows, and 23 more variables: ebt_homepage <chr>,
+    ## # … with 482 more rows, and 23 more variables: ebt_homepage <chr>,
     ## #   pebt_notes <chr>, contains_original_info <chr>, links_to_CDSS <chr>,
     ## #   links_to_cfa <chr>, open_hour <chr>, close_hour <chr>, notes <chr>,
     ## #   notes_es <chr>, days_of_week <chr>, county <chr>, phone <chr>, email <chr>,
@@ -163,16 +163,16 @@ school_meals %>%
     ## # A tibble: 3 x 2
     ##   status      n
     ##   <chr>   <int>
-    ## 1 Closed    205
-    ## 2 Open      546
-    ## 3 Unclear     9
+    ## 1 Closed    264
+    ## 2 Open      492
+    ## 3 Unclear     6
 
 ``` r
 school_meals %>% 
   distinct(site_name)
 ```
 
-    ## # A tibble: 738 x 1
+    ## # A tibble: 740 x 1
     ##    site_name                      
     ##    <chr>                          
     ##  1 Junction Avenue K-8            
@@ -185,7 +185,7 @@ school_meals %>%
     ##  8 Berkeley Arts Magnet Elementary
     ##  9 Washington Elementary          
     ## 10 Rosa Parks Elementary          
-    ## # … with 728 more rows
+    ## # … with 730 more rows
 
 ``` r
 school_meals %>% 
@@ -220,7 +220,7 @@ school_meals %>%
     ##   pebt_info_yn     n
     ##   <chr>        <int>
     ## 1 0              409
-    ## 2 1              351
+    ## 2 1              353
 
 ``` r
 school_meals %>% 
@@ -274,7 +274,7 @@ school_meals %>%
   distinct(site_name)  #43 report 
 ```
 
-    ## # A tibble: 347 x 1
+    ## # A tibble: 349 x 1
     ##    site_name                           
     ##    <chr>                               
     ##  1 Junction Avenue K-8                 
@@ -287,7 +287,7 @@ school_meals %>%
     ##  8 Willard Middle School               
     ##  9 Martin Luther King Jr. Middle School
     ## 10 Castro Valley Elementary School     
-    ## # … with 337 more rows
+    ## # … with 339 more rows
 
 ``` r
 meals_pebt <- 
@@ -312,7 +312,7 @@ meals_pebt %>%
     ## # A tibble: 1 x 3
     ##   links_to_cfa links_to_CDSS contains_original_info
     ##          <dbl>         <dbl>                  <dbl>
-    ## 1           48            12                     35
+    ## 1           49            12                     35
 
 ### Schools ending summer distribution
 
@@ -326,7 +326,7 @@ school_meals_months %>%
     ## # A tibble: 1 x 1
     ##   total_sites
     ##         <int>
-    ## 1         546
+    ## 1         492
 
 ``` r
 school_meals_months %>% 
@@ -336,7 +336,7 @@ school_meals_months %>%
     ## # A tibble: 1 x 1
     ##   total_districts
     ##             <int>
-    ## 1             111
+    ## 1              96
 
 ``` r
 school_meals_months %>% 
@@ -345,13 +345,14 @@ school_meals_months %>%
   mutate(pct_schools = no_schools * 100 / sum(no_schools))
 ```
 
-    ## # A tibble: 4 x 3
-    ##   end_month    no_schools pct_schools
-    ##   <chr>             <int>       <dbl>
-    ## 1 August               95        17.4
-    ## 2 End date TBC        193        35.3
-    ## 3 July                146        26.7
-    ## 4 June                112        20.5
+    ## # A tibble: 5 x 3
+    ##   end_month     no_schools pct_schools
+    ##   <chr>              <int>       <dbl>
+    ## 1 August               103       20.9 
+    ## 2 End date TBC         178       36.2 
+    ## 3 end of summer          7        1.42
+    ## 4 July                 161       32.7 
+    ## 5 June                  43        8.74
 
 ``` r
 school_meals_months %>%
@@ -361,14 +362,15 @@ school_meals_months %>%
   rename("no_districts" = n)
 ```
 
-    ## # A tibble: 4 x 2
-    ## # Groups:   end_month [4]
-    ##   end_month    no_districts
-    ##   <chr>               <int>
-    ## 1 August                 24
-    ## 2 End date TBC           43
-    ## 3 July                   24
-    ## 4 June                   28
+    ## # A tibble: 5 x 2
+    ## # Groups:   end_month [5]
+    ##   end_month     no_districts
+    ##   <chr>                <int>
+    ## 1 August                  26
+    ## 2 End date TBC            40
+    ## 3 end of summer            3
+    ## 4 July                    27
+    ## 5 June                     5
 
 ``` r
 school_meals %>% 
@@ -471,7 +473,7 @@ school_meals_clean <-
 school_meals_clean
 ```
 
-    ## # A tibble: 504 x 32
+    ## # A tibble: 458 x 32
     ##    site_name address city  zip   lat   lon   district_name status pebt_info_yn
     ##    <chr>     <chr>   <chr> <chr> <chr> <chr> <chr>         <chr>  <chr>       
     ##  1 Junction… 298 Ju… Live… 94551 37.6… -121… Livermore Va… Open   1           
@@ -484,7 +486,7 @@ school_meals_clean
     ##  8 Rosa Par… 920 Al… Berk… 94710 37.8… -122… Berkeley Uni… Open   1           
     ##  9 Longfell… 1522 W… Berk… 95704 37.8… -122… Berkeley Uni… Open   1           
     ## 10 Berkeley… 1980 A… Berk… 94704 37.8… -122… Berkeley Uni… Open   1           
-    ## # … with 494 more rows, and 23 more variables: ebt_homepage <chr>,
+    ## # … with 448 more rows, and 23 more variables: ebt_homepage <chr>,
     ## #   pebt_notes <chr>, contains_original_info <chr>, links_to_CDSS <chr>,
     ## #   links_to_cfa <chr>, open_hour <chr>, close_hour <chr>, notes <chr>,
     ## #   notes_es <chr>, days_of_week <chr>, county <chr>, phone <chr>, email <chr>,
@@ -503,7 +505,7 @@ intersect(
 )
 ```
 
-    ## # A tibble: 103 x 1
+    ## # A tibble: 91 x 1
     ##    district_name                 
     ##    <chr>                         
     ##  1 Livermore Valley Joint Unified
@@ -516,7 +518,7 @@ intersect(
     ##  8 Hayward Unified               
     ##  9 New Haven Unified             
     ## 10 Newark Unified                
-    ## # … with 93 more rows
+    ## # … with 81 more rows
 
 ``` r
 districts <- school_meals_clean %>% distinct(district_name) %>% pull()
@@ -555,7 +557,7 @@ frpm_districts %>% summarise(total_enroll = sum(total_enroll))
     ## # A tibble: 1 x 1
     ##   total_enroll
     ##          <dbl>
-    ## 1      1117408
+    ## 1      1057474
 
 ## Averaging district population across school closures
 
@@ -594,7 +596,8 @@ school_meals_average <-
     percent_eligible_free_k12 = total_frac_free_eligible / total_frac_enroll,
     percent_eligible_frpm_k12 = total_frac_frpm_eligible / total_frac_enroll
   ) %>% 
-  mutate(end_month = factor(end_month, levels = level_key))
+  mutate(end_month = factor(end_month, levels = level_key)) %>% 
+  drop_na(end_month)
 
 
 school_meals_average
@@ -604,10 +607,10 @@ school_meals_average
     ## # Groups:   end_month [4]
     ##   end_month num_districts num_schools_clo… sum_schools total_frac_enro…
     ##   <fct>             <int>            <int>       <int>            <dbl>
-    ## 1 August               23               92         115          207856.
-    ## 2 End date…            39              180         182          404852.
-    ## 3 July                 22              127         136          238852.
-    ## 4 June                 26              105         124          265848.
+    ## 1 August               25              100         118          259893.
+    ## 2 End date…            37              166         166          394092 
+    ## 3 July                 25              142         161          260074.
+    ## 4 June                  5               43          59          104606.
     ## # … with 4 more variables: total_frac_free_eligible <dbl>,
     ## #   total_frac_frpm_eligible <dbl>, percent_eligible_free_k12 <dbl>,
     ## #   percent_eligible_frpm_k12 <dbl>
@@ -616,13 +619,7 @@ school_meals_average
 
 The analysis shows that the 22 school districts which are closing school
 sites in July have a higher-than-average percentage of children on FRPM
-(\~65.9%) compared to an average of 42.8343191%.
-
-Overall, the percentage of students on FRPM across districts closing in
-June and July is 53%, compared to 44% FRPM studentsfor districts closing
-in August and beyond. The school meal site closures directly impact
-districts with a higher proportion of students eligible for free and
-reduced lunch.
+(59.53%) compared to an average of 45.98%.
 
 ``` r
 school_meals_average %>% 
@@ -681,7 +678,8 @@ ggsave("total_districts.png", height = 4, width = 7)
 ```
 
 ``` r
-school_meals_average %>% 
+school_meals_twoperiod <- 
+  school_meals_average %>% 
   mutate(
     time_period = 
       if_else(
@@ -694,7 +692,13 @@ school_meals_average %>%
     total_frac_enroll = sum(total_frac_enroll),
     total_frac_frpm_eligible = sum(total_frac_frpm_eligible)
   ) %>% 
-  mutate(percent_eligible_frpm_k12 = total_frac_frpm_eligible / total_frac_enroll) %>% 
+  mutate(percent_eligible_frpm_k12 = total_frac_frpm_eligible / total_frac_enroll) 
+```
+
+    ## `summarise()` ungrouping output (override with `.groups` argument)
+
+``` r
+school_meals_twoperiod %>%
   ggplot(aes(x = time_period, y = percent_eligible_frpm_k12)) +
   geom_col() +
   ggrepel::geom_text_repel(
@@ -713,10 +717,14 @@ school_meals_average %>%
   )
 ```
 
-    ## `summarise()` ungrouping output (override with `.groups` argument)
-
 ![](School_meal_Pandemic_EBT_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ``` r
 ggsave("timeperiods.png", height = 4, width = 7)
 ```
+
+Overall, the percentage of students on FRPM across districts closing in
+June and July is 57.7%, compared to 43.1% FRPM students for districts
+closing in August and beyond. The school meal site closures directly
+impact districts with a higher proportion of students eligible for free
+and reduced lunch.

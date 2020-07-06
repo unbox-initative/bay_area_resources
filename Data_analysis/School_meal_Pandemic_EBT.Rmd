@@ -1,5 +1,5 @@
 ---
-title: "School_meals_report"
+title: "FRPM analysis"
 author: "Chris LeBoa & Joyce Tagal"
 date: "`r Sys.Date()`"
 output: 
@@ -310,7 +310,8 @@ school_meals_average <-
     percent_eligible_free_k12 = total_frac_free_eligible / total_frac_enroll,
     percent_eligible_frpm_k12 = total_frac_frpm_eligible / total_frac_enroll
   ) %>% 
-  mutate(end_month = factor(end_month, levels = level_key))
+  mutate(end_month = factor(end_month, levels = level_key)) %>% 
+  drop_na(end_month)
 
 
 school_meals_average
@@ -320,16 +321,13 @@ school_meals_average
 ## Conclusion and GGPlot
 
 The analysis shows that the 22 school districts which are closing school sites 
-in July have a higher-than-average percentage of children on FRPM (~65.9%) 
+in July have a higher-than-average percentage of children on FRPM (`r round(mean(school_meals_average[school_meals_average$end_month == "July", ]$percent_eligible_frpm_k12) * 100, 2)`%)
 compared to an average of 
-`r mean(school_meals_average[school_meals_average$end_month != "July", ]$percent_eligible_frpm_k12) * 100`%. 
+`r round(mean(school_meals_average[school_meals_average$end_month != "July", ]$percent_eligible_frpm_k12) * 100, 2)`%. 
 
-Overall, the percentage of students on FRPM across districts closing in June
-and July is 53%, compared to 44% FRPM studentsfor districts closing in August 
-and beyond. The school meal site closures directly impact districts with a higher
-proportion of students eligible for free and reduced lunch.
 
 ```{r}
+
 
 school_meals_average %>% 
   ggplot(aes(x = end_month, y = percent_eligible_frpm_k12)) +
@@ -380,7 +378,8 @@ ggsave("total_districts.png", height = 4, width = 7)
 
 ```{r}
 
-school_meals_average %>% 
+school_meals_twoperiod <- 
+  school_meals_average %>% 
   mutate(
     time_period = 
       if_else(
@@ -393,7 +392,9 @@ school_meals_average %>%
     total_frac_enroll = sum(total_frac_enroll),
     total_frac_frpm_eligible = sum(total_frac_frpm_eligible)
   ) %>% 
-  mutate(percent_eligible_frpm_k12 = total_frac_frpm_eligible / total_frac_enroll) %>% 
+  mutate(percent_eligible_frpm_k12 = total_frac_frpm_eligible / total_frac_enroll) 
+
+school_meals_twoperiod %>%
   ggplot(aes(x = time_period, y = percent_eligible_frpm_k12)) +
   geom_col() +
   ggrepel::geom_text_repel(
@@ -412,5 +413,12 @@ school_meals_average %>%
   )
 
 ggsave("timeperiods.png", height = 4, width = 7)
+
+
+
 ```
 
+Overall, the percentage of students on FRPM across districts closing in June
+and July is `r round(school_meals_twoperiod[school_meals_twoperiod$time_period == "June and July", ]$percent_eligible_frpm_k12 * 100, 1)`%, compared to `r round(school_meals_twoperiod[school_meals_twoperiod$time_period != "June and July", ]$percent_eligible_frpm_k12 * 100, 1)`% FRPM students for districts closing in August 
+and beyond. The school meal site closures directly impact districts with a higher
+proportion of students eligible for free and reduced lunch.
