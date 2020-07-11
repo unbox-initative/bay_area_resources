@@ -16,11 +16,13 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(sf)
 library(googlesheets4)
+library(leaflet)
 
 # Parameters
 sd_link <- here::here("data/NCES School district boundaries EDGE_SCHOOLDISTRICT_TL19_SY1819/schooldistrict_sy1819_tl19.shp")
 
 zc_link <- here::here("data/Bay Area ZIP Codes/geo_export_24b81bd6-6208-4590-bb1a-24867e0b57d7.shp")
+zc_link <- here::here("data/Bay Area ZIP Codes/geo_export_76ae00c4-d35c-40eb-a794-48118f008f9f.shp") # some reason our file names are different
 
 cfzip_link <- here::here("data/CalFresh/by_zip_pre_postMar15.csv")
 
@@ -72,7 +74,8 @@ bay_zctas %>%
 
 zip <- 
   read_sf(zc_link) %>% 
-  st_transform(crs = CA_ALBERS)
+  # st_transform(crs = CA_ALBERS)
+  st_transform(crs = 4326)
 
 st_crs(zip)
 
@@ -116,11 +119,13 @@ sd %>%
 ## Check zips between Bay 
 
 ```{r}
+
+gs4_deauth()
 school_meals <- 
   read_sheet(
     ss = "1fea1BSSAhbSB0HLsatDaD8wxmwsF7ezQjNvjRK-QJQI", 
     skip = 1,
-    col_types = "ccccccccccccccccccccccccccccccc"
+    col_types = "ccccnncccccccccccccccccccccccccccccc"
   ) %>% 
   rename(
     "district_name" = provider_addloc,
@@ -167,8 +172,52 @@ the total area of the school district.
 6. Provides the ratio of children in that zipcode re: district area
 
 ```{r}
+
 sd %>% 
   filter(str_detect(NAME, "Dublin")) 
+
+sd_bay <- 
+  sd %>% 
+  st_intersection(zip)
+
+sd_meals <- 
+  school_meals %>% 
+  filter(status=="Closed") %>% 
+  .$district_name %>% 
+  unique() %>% 
+  map_dfr(function(district){
+    sd_bay %>% 
+      filter(str_detect(NAME, district)) %>% 
+      as.data.frame()
+  }) %>% 
+  st_as_sf() %>% 
+  st_transform(crs = 4326)
+    
+mapview(sd_meals)
+
+leaflet() %>% 
+  addProviderTiles(providers$CartoDB.Positron, group = "Default") %>%
+  addPolygons(
+    data = sd_meals,
+    fillColor = "blue",
+    color = "#444444", 
+    weight = 1, 
+    smoothFactor = 0.5,
+    opacity = 1.0, 
+    fillOpacity = 0.5,
+    label=~paste0(NAME," (",zip,")")
+  ) %>% 
+  addCircleMarkers(
+    data = school_meals %>% filter(status=="Closed") %>% filter(toupper(city) %in% sd_bay$po_name),
+    radius=3,
+    fillColor = "red",
+    color = "#444444", 
+    weight = 1, 
+    opacity = 1.0, 
+    fillOpacity = 0.5,
+    label=~paste0(district_name," (",zip,")")
+  )
+
 
 ```
 
