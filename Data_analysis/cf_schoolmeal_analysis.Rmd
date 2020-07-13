@@ -205,10 +205,10 @@ leaflet() %>%
     smoothFactor = 0.5,
     opacity = 1.0, 
     fillOpacity = 0.5,
-    label=~paste0(NAME," (",zip,")")
+    label=~paste0(NAME," (",ZIP_CODE,")")
   ) %>% 
   addCircleMarkers(
-    data = school_meals %>% filter(status=="Closed") %>% filter(toupper(city) %in% sd_bay$po_name),
+    data = school_meals %>% filter(status=="Closed") %>% filter(toupper(city) %in% toupper(sd_bay$PO_NAME)),
     radius=3,
     fillColor = "red",
     color = "#444444", 
